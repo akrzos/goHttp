@@ -11,14 +11,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-var ready bool = false
+var livez bool = false
+var readyz bool = false
 var livenessCount int = 0
 
-func readinessDelay(delay int) {
-	log.Print("Starting ready delay...")
+func livenessDelay(delay int) {
+	log.Print("Starting livez delay...")
 	time.Sleep(time.Duration(delay) * time.Second)
-	ready = true
-	log.Print("Completed ready delay")
+	livez = true
+	log.Print("Completed livez delay")
+}
+
+func readinessDelay(delay int) {
+	log.Print("Starting readyz delay...")
+	time.Sleep(time.Duration(delay) * time.Second)
+	readyz = true
+	log.Print("Completed readyz delay")
 }
 
 func main() {
@@ -26,7 +34,8 @@ func main() {
 
 	port := os.Getenv("PORT")
 	listenDelay := os.Getenv("LISTEN_DELAY_SECONDS")
-	readyDelay := os.Getenv("READINESS_DELAY_SECONDS")
+	livezDelay := os.Getenv("LIVENESS_DELAY_SECONDS")
+	readyzDelay := os.Getenv("READINESS_DELAY_SECONDS")
 	responseDelay := os.Getenv("RESPONSE_DELAY_MILLISECONDS")
 	livenessSuccessMax := os.Getenv("LIVENESS_SUCCESS_MAX")
 
@@ -48,15 +57,26 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to convert listenDelay"))
 	}
 
-	if readyDelay == "" {
-		readyDelay = "10"
+	if livezDelay == "" {
+		livezDelay = "2"
+		log.Print("Using live delay default of 2s")
+	} else {
+		log.Print("Using live delay " + listenDelay + "s")
+	}
+	livezDelaySeconds, err := strconv.Atoi(livezDelay)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to convert listenDelay"))
+	}
+
+	if readyzDelay == "" {
+		readyzDelay = "10"
 		log.Print("Using readiness delay default of 10s")
 	} else {
-		log.Print("Using readiness delay " + readyDelay + "s")
+		log.Print("Using readiness delay " + readyzDelay + "s")
 	}
-	readyDelaySeconds, err := strconv.Atoi(readyDelay)
+	readyzDelaySeconds, err := strconv.Atoi(readyzDelay)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to convert readyDelay"))
+		log.Fatal(errors.Wrap(err, "failed to convert readyzDelay"))
 	}
 
 	if responseDelay == "" {
@@ -89,13 +109,14 @@ func main() {
 		log.Print("No listen delay")
 	}
 
-	go readinessDelay(readyDelaySeconds)
+	go livenessDelay(livezDelaySeconds)
+	go readinessDelay(readyzDelaySeconds)
 
 	http.HandleFunc("/home", func(w http.ResponseWriter, _ *http.Request) {
 		if responseDelayMilliSeconds != 0 {
 			time.Sleep(time.Duration(responseDelayMilliSeconds) * time.Millisecond)
 		}
-		if ready {
+		if readyz {
 			log.Print("/home request when ready")
 			fmt.Fprint(w, "/home request processed")
 		} else {
@@ -109,7 +130,7 @@ func main() {
 		if responseDelayMilliSeconds != 0 {
 			time.Sleep(time.Duration(responseDelayMilliSeconds) * time.Millisecond)
 		}
-		if ready {
+		if readyz {
 			log.Print("/readyz request when ready")
 			fmt.Fprint(w, "/readyz request processed")
 		} else {
@@ -123,7 +144,7 @@ func main() {
 		if responseDelayMilliSeconds != 0 {
 			time.Sleep(time.Duration(responseDelayMilliSeconds) * time.Millisecond)
 		}
-		if ready {
+		if livez {
 			if livenessCountMax != 0 {
 				livenessCount++
 				if livenessCount > livenessCountMax {
@@ -148,7 +169,7 @@ func main() {
 		if responseDelayMilliSeconds != 0 {
 			time.Sleep(time.Duration(responseDelayMilliSeconds) * time.Millisecond)
 		}
-		if ready {
+		if readyz {
 			log.Print("/crash request when ready")
 			fmt.Fprint(w, "/crash request processed")
 		} else {

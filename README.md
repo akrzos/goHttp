@@ -8,6 +8,7 @@ Simple golang http server configured for kubernetes probes
 | ----------------------------- | ------- | ------------------------------------------------------------------------------------------ |
 | `PORT`                        | `8000`  | Port to listen on                                                                          |
 | `LISTEN_DELAY_SECONDS`        | `10`    | Delay before application will listen for requests in seconds                               |
+| `LIVENESS_DELAY_SECONDS`      | `2`     | Delay before application will report HTTP 200 on /livez in seconds                         |
 | `READINESS_DELAY_SECONDS`     | `10`    | Delay before application will report HTTP 200 on /readyz in seconds                        |
 | `RESPONSE_DELAY_MILLISECONDS` | `0`     | Delay for responsiveness of all endpoints in milliseconds                                  |
 | `LIVENESS_SUCCESS_MAX`        | `0`     | Maximum number of /livez replies before and http 503 is returned, 0 means infinite replies |
@@ -18,18 +19,21 @@ Simple golang http server configured for kubernetes probes
 ```console
 [akrzos@fedora goHttp]$ source env.sh
 [akrzos@fedora goHttp]$ go run main.go
-2021/08/16 15:02:36 Starting the server...
-2021/08/16 15:02:36 Using port 8000
-2021/08/16 15:02:36 Using listen delay 3s
-2021/08/16 15:02:36 Using readiness delay 3s
-2021/08/16 15:02:36 Using response delay 500ms
-2021/08/16 15:02:36 Using liveness success max 3
-2021/08/16 15:02:36 Starting listen delay...
-2021/08/16 15:02:39 Completed listen delay
-2021/08/16 15:02:39 The service is listening on port 8000
-2021/08/16 15:02:39 Starting ready delay...
-2021/08/16 15:02:42 Completed ready delay
-2021/08/16 15:04:08 /readyz request when ready
+2021/08/16 16:55:08 Starting the server...
+2021/08/16 16:55:08 Using port 8000
+2021/08/16 16:55:08 Using listen delay 3s
+2021/08/16 16:55:08 Using live delay 3s
+2021/08/16 16:55:08 Using readiness delay 3s
+2021/08/16 16:55:08 Using response delay 500ms
+2021/08/16 16:55:08 Using liveness success max 3
+2021/08/16 16:55:08 Starting listen delay...
+2021/08/16 16:55:11 Completed listen delay
+2021/08/16 16:55:11 The service is listening on port 8000
+2021/08/16 16:55:11 Starting readyz delay...
+2021/08/16 16:55:11 Starting livez delay...
+2021/08/16 16:55:12 Completed livez delay
+2021/08/16 16:55:14 Completed readyz delay
+2021/08/16 16:55:32 /readyz request when ready
 ...
 ```
 
