@@ -14,6 +14,7 @@ import (
 var livez bool = false
 var readyz bool = false
 var livenessCount int = 0
+var readinessCount int = 0
 
 func livenessDelay(delay int) {
 	log.Print("Starting livez delay...")
@@ -38,6 +39,7 @@ func main() {
 	readyzDelay := os.Getenv("READINESS_DELAY_SECONDS")
 	responseDelay := os.Getenv("RESPONSE_DELAY_MILLISECONDS")
 	livenessSuccessMax := os.Getenv("LIVENESS_SUCCESS_MAX")
+	readinessSuccessMax := os.Getenv("READINESS_SUCCESS_MAX")
 
 	if port == "" {
 		port = "8000"
@@ -101,6 +103,17 @@ func main() {
 		log.Fatal(errors.Wrap(err, "failed to convert livenessSuccessMax"))
 	}
 
+	if readinessSuccessMax == "" {
+		readinessSuccessMax = "0"
+		log.Print("Using readiness success max default of 0")
+	} else {
+		log.Print("Using readiness success max " + readinessSuccessMax)
+	}
+	readinessCountMax, err := strconv.Atoi(readinessSuccessMax)
+	if err != nil {
+		log.Fatal(errors.Wrap(err, "failed to convert readinessSuccessMax"))
+	}
+
 	if listenDelaySeconds > 0 {
 		log.Print("Starting listen delay...")
 		time.Sleep(time.Duration(listenDelaySeconds) * time.Second)
@@ -131,8 +144,19 @@ func main() {
 			time.Sleep(time.Duration(responseDelayMilliSeconds) * time.Millisecond)
 		}
 		if readyz {
-			log.Print("/readyz request when ready")
-			fmt.Fprint(w, "/readyz request processed")
+			if readinessCountMax != 0 {
+				readinessCount++
+				if readinessCount > livenessCountMax {
+					log.Print("/readyz request after readiness success count exceeded " + strconv.Itoa(readinessCount) + "/" + strconv.Itoa(readinessCountMax))
+					w.WriteHeader(http.StatusServiceUnavailable)
+				} else {
+					log.Print("/readyz request when ready " + strconv.Itoa(readinessCount) + "/" + strconv.Itoa(readinessCountMax))
+					fmt.Fprint(w, "/readyz request processed")
+				}
+			} else {
+				log.Print("/readyz request when ready")
+				fmt.Fprint(w, "/readyz request processed")
+			}
 		} else {
 			log.Print("/readyz request when not ready")
 			w.WriteHeader(http.StatusServiceUnavailable)
