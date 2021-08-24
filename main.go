@@ -146,7 +146,7 @@ func main() {
 		if readyz {
 			if readinessCountMax != 0 {
 				readinessCount++
-				if readinessCount > livenessCountMax {
+				if readinessCount > readinessCountMax {
 					log.Print("/readyz request after readiness success count exceeded " + strconv.Itoa(readinessCount) + "/" + strconv.Itoa(readinessCountMax))
 					w.WriteHeader(http.StatusServiceUnavailable)
 				} else {
