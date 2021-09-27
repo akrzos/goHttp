@@ -1,5 +1,8 @@
 # Environment vars for testing
 export PORT=8000
+export STARTUP_FILE=/tmp/startup2
+export LIVENESS_FILE=/tmp/liveness2
+export READINESS_FILE=/tmp/readiness2
 export LISTEN_DELAY_SECONDS=3
 export LIVENESS_DELAY_SECONDS=1
 export READINESS_DELAY_SECONDS=3

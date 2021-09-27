@@ -16,24 +16,51 @@ var readyz bool = false
 var livenessCount int = 0
 var readinessCount int = 0
 
-func livenessDelay(delay int) {
+func livenessDelay(delay int, fileName string) {
 	log.Print("Starting livez delay...")
 	time.Sleep(time.Duration(delay) * time.Second)
 	livez = true
+	writeFile(fileName)
 	log.Print("Completed livez delay")
 }
 
-func readinessDelay(delay int) {
+func readinessDelay(delay int, fileName string) {
 	log.Print("Starting readyz delay...")
 	time.Sleep(time.Duration(delay) * time.Second)
 	readyz = true
+	writeFile(fileName)
 	log.Print("Completed readyz delay")
+}
+
+func removeFile(fileName string) {
+	log.Print("Removing file: " + fileName)
+	if _, err := os.Stat(fileName); err == nil {
+		e := os.Remove(fileName)
+		if e != nil {
+			 log.Fatal(e)
+		}
+	}
+}
+
+func writeFile(fileName string) {
+	log.Print("Writing file: " + fileName)
+	_, err := os.Stat(fileName)
+	if os.IsNotExist(err) {
+		file, err := os.Create(fileName)
+		if err != nil {
+				log.Fatal(err)
+		}
+		defer file.Close()
+	}
 }
 
 func main() {
 	log.Print("Starting the server...")
 
 	port := os.Getenv("PORT")
+	startupFile := os.Getenv("STARTUP_FILE")
+	livenessFile := os.Getenv("LIVENESS_FILE")
+	readinessFile := os.Getenv("READINESS_FILE")
 	listenDelay := os.Getenv("LISTEN_DELAY_SECONDS")
 	livezDelay := os.Getenv("LIVENESS_DELAY_SECONDS")
 	readyzDelay := os.Getenv("READINESS_DELAY_SECONDS")
@@ -47,6 +74,31 @@ func main() {
 	} else {
 		log.Print("Using port " + port)
 	}
+
+	if startupFile == "" {
+		startupFile = "/tmp/startup"
+		log.Print("Using default startupFile /tmp/startup")
+	} else {
+		log.Print("Using startupFile " + startupFile)
+	}
+
+	if livenessFile == "" {
+		livenessFile = "/tmp/liveness"
+		log.Print("Using default livenessFile /tmp/liveness")
+	} else {
+		log.Print("Using livenessFile " + livenessFile)
+	}
+
+	if readinessFile == "" {
+		readinessFile = "/tmp/readiness"
+		log.Print("Using default readinessFile /tmp/readiness")
+	} else {
+		log.Print("Using readinessFile " + readinessFile)
+	}
+
+	removeFile(startupFile)
+	removeFile(livenessFile)
+	removeFile(readinessFile)
 
 	if listenDelay == "" {
 		listenDelay = "10"
@@ -121,9 +173,10 @@ func main() {
 	} else {
 		log.Print("No listen delay")
 	}
+	writeFile(startupFile)
 
-	go livenessDelay(livezDelaySeconds)
-	go readinessDelay(readyzDelaySeconds)
+	go livenessDelay(livezDelaySeconds, livenessFile)
+	go readinessDelay(readyzDelaySeconds, readinessFile)
 
 	http.HandleFunc("/home", func(w http.ResponseWriter, _ *http.Request) {
 		if responseDelayMilliSeconds != 0 {
