@@ -115,11 +115,11 @@ func main() {
 		livezDelay = "2"
 		log.Print("Using live delay default of 2s")
 	} else {
-		log.Print("Using live delay " + listenDelay + "s")
+		log.Print("Using live delay " + livezDelay + "s")
 	}
 	livezDelaySeconds, err := strconv.Atoi(livezDelay)
 	if err != nil {
-		log.Fatal(errors.Wrap(err, "failed to convert listenDelay"))
+		log.Fatal(errors.Wrap(err, "failed to convert livezDelay"))
 	}
 
 	if readyzDelay == "" {
